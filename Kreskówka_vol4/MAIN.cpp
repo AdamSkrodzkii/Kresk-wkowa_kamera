@@ -2,8 +2,12 @@
 #include <stdio.h>
 #include "Media.h"
 #include "Camera.h"
-#include <gdiplus.h>
+#include "Pictures.h"
+
+#include <gdiplus.h>									//Gdi jest bibliotek¹ bazuj¹c¹ na WIndows API
+
 #define no_init_all = NULL;
+
 LRESULT CALLBACK ProceduraOkna(HWND, UINT, UINT, LONG); // deklaracja zapowiadaj¹ca
 
 int WINAPI WinMain (									//Tworzenie (main) okienka aplikacji
@@ -18,16 +22,16 @@ int WINAPI WinMain (									//Tworzenie (main) okienka aplikacji
 	ULONG_PTR gdiplusToken;
 	Gdiplus::GdiplusStartup(&gdiplusToken, &gdiplusstartupinput,nullptr);
 
-	Media* m = new Media();
-	m->CreateCaptureDevice();
-
+	
 	char Camera_name[2024];
-	wsprintf(Camera_name, "Kamera do której siê po³¹czy³em to: %ls o rozdzielczoœci %d x %d", m->deviceNameString, m->width, m->height);
-
+	
 	char szClassName[] = "Kreskówkowa kamera";
 
 	HWND hwnd;											//Podaje uchwyt okna, do którego kierowany jest dany komunikat.
 	MSG msg;
+	Media* m = new Media();
+	m->CreateCaptureDevice();
+	wsprintf(Camera_name, "Kamera do której siê po³¹czy³em to: %ls o rozdzielczoœci %d x %d", m->deviceNameString, m->width, m->height);
 
 	WNDCLASSEX  wndclass;								//Rejestrujemy klasê okna, po czym wykorzystujemy j¹ do utworzenia i wyœwietlenia na ekranie nowego okna
 														//Zawiera niezbêdne do rejestracji dane. Zgodnie z poni¿sz¹ deklaracj¹, posiada ona a¿ 12 pól, które wype³niamy na pocz¹tku funkcji WinMain.
@@ -64,6 +68,7 @@ int WINAPI WinMain (									//Tworzenie (main) okienka aplikacji
 		hInstance,										//Uchwyt wyst¹pienia programu										{HINSTANCE}
 		NULL											//WskaŸnik do danych u¿ytkownika u¿ywanych do inicjalizacji okna	{LPVOID}
 	);
+	Pictures* pics = new Pictures(hwnd, m->width, m->height, nCmdShow);
 
 	if (hwnd == 0) return -1;
 	ShowWindow(hwnd, nCmdShow);
@@ -75,6 +80,7 @@ int WINAPI WinMain (									//Tworzenie (main) okienka aplikacji
 	while ((result = GetMessage(&msg, NULL, 0, 0)) != 0)
 	{
 		if (result == -1) return -1;
+		pics->Draw(m->rawData, m->width,m->bytesPerPixel);
 		TranslateMessage(&msg);
 		DispatchMessage(&msg);
 	}
@@ -96,10 +102,12 @@ LRESULT CALLBACK ProceduraOkna(HWND hwnd, UINT message,
 		RECT        rect;
 		HDC hdc = BeginPaint(hwnd, &ps);				//Uchwyt do urz¹dzenia. Funkcja BeginPaint przygotowuje okreœlone okno do malowania i wype³nia strukturê PAINTSTRUCT informacjami o malowaniu.
 		GetClientRect(hwnd, &rect);						//Pobiera wspó³rzêdne obszaru roboczego okna.Wspó³rzêdne klienta okreœlaj¹ lewy górny i prawy dolny róg obszaru roboczego.
+
 		Gdiplus::Graphics gf(hdc);
 		DrawText(hdc, "jakiœ tekst", -1, &rect,
 			DT_SINGLELINE | DT_CENTER | DT_VCENTER);
 
+														// @@@@ LAMA zmieñ t¹ œcie¿kê @@@@ //
 		Gdiplus::Bitmap bmp(L"C://Users/Adam/Desktop/Projekty_Mechatro/Niskopoziomowe/Kreskówkowa_kamera/Kreskówka_vol4/Kreskówka_vol4/indeks.jpg");
 		gf.DrawImage(&bmp, 1000, 400);
 		EndPaint(hwnd, &ps);
